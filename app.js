@@ -44,6 +44,17 @@ var budgetController = (function () {
             //return the new element
             return newItem;
         },
+        removeItem: function (ItemID) {
+            var type = ItemID.slice(0, 3), ID = parseFloat(ItemID.slice(4)), index;
+            var element = data.allItems[type].map(element => {
+                 return element.id;
+            });
+            index = element.indexOf(ID);
+            if (index !== -1) {
+                var deletedElement = data.allItems[type].splice(index, 1);
+                data.totals[type] -= deletedElement[0].value;
+            }
+        },
         // get and update data
         getBudget: function () {
             data.budget = data.totals.inc - data.totals.exp;
@@ -58,6 +69,9 @@ var budgetController = (function () {
                 totalExp: data.totals.exp,
                 totalInc: data.totals.inc
             };
+        },
+        testing: function(){
+            return data;
         }
     };
 })();
@@ -74,7 +88,8 @@ var UIController = (function () {
         incomeLabel: '.budget__income--value',
         expenseLabel: '.budget__expenses--value',
         budgetLabel: '.budget__value',
-        percentageLabel: '.budget__expenses--percentage'
+        percentageLabel: '.budget__expenses--percentage',
+        container: '.container'
     }
     return {
         getInput: function () {
@@ -91,7 +106,7 @@ var UIController = (function () {
                 element = DOMstrings.expenseContainer;
                 htmlObject = document.createElement('div');
                 htmlObject.className = "item clearfix";
-                htmlObject.setAttribute('id', `expense-${obj.id}`)
+                htmlObject.setAttribute('id', `exp-${obj.id}`)
                 html = `<div class="item__description">${obj.description}</div>
                     <div class="right clearfix">
                         <div class="item__value">- ${obj.value}</div>
@@ -104,7 +119,7 @@ var UIController = (function () {
                 element = DOMstrings.incomeContainer;
                 htmlObject = document.createElement('div');
                 htmlObject.className = "item clearfix";
-                htmlObject.setAttribute('id', `income-${obj.id}`)
+                htmlObject.setAttribute('id', `inc-${obj.id}`)
                 html = `<div class="item__description">${obj.description}</div>
                     <div class="right clearfix">
                         <div class="item__value">+ ${obj.value}</div>
@@ -116,6 +131,9 @@ var UIController = (function () {
             // insert the HTML to the DOM
             htmlObject.innerHTML = html;
             document.querySelector(element).insertAdjacentElement('beforeend', htmlObject);
+        },
+        removeListItem: function(id){
+            document.getElementById(id).remove();
         },
         clearFields: function () {
             var fields;
@@ -154,6 +172,7 @@ var controller = (function (budgetCtrl, UIctrl) {
                 ctrlAddItem();
             }
         });
+        document.querySelector(UIctrl.getDOMstrings().container).addEventListener('click', ctrlRemoveItem);
     };
 
     //update Budget
@@ -161,7 +180,7 @@ var controller = (function (budgetCtrl, UIctrl) {
         var budget = budgetCtrl.getBudget();
         // display Budget
         UIctrl.displayBudget(budget);
-    }
+    };
 
     var ctrlAddItem = function () {
         var input, newItem;
@@ -178,7 +197,14 @@ var controller = (function (budgetCtrl, UIctrl) {
         } else {
             alert('Please enter description and its value!');
         }
-    }
+    };
+
+    var ctrlRemoveItem = function (event) {
+        var itemID = event.target.parentNode.parentNode.parentNode.parentNode.id;
+        budgetCtrl.removeItem(itemID);
+        UIctrl.removeListItem(itemID);
+        updateBudget();
+    };
     return {
         init: function () {
             console.log('Application has started.');
@@ -190,7 +216,7 @@ var controller = (function (budgetCtrl, UIctrl) {
             });
             setupEventListener();
         }
-    }
+    };
 
 })(budgetController, UIController);
 
